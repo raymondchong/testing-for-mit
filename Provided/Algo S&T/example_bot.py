@@ -2,6 +2,7 @@ from tradersbot import *
 from datetime import datetime, timedelta
 import numpy as np
 import pandas as pd
+import py_vollib
 
 #Initialize variables: positions, expectations, future customer orders, etc
 position_limit = 5000
@@ -13,6 +14,31 @@ time = 0
 topBid = 0
 topAsk = 0
 #etc etc
+"""
+py_vollib.black_scholes_merton.implied_volatility.implied_volatility(price, S, K, t, r, q, flag)[source]
+Calculate the Black-Scholes-Merton implied volatility.
+
+Parameters:	
+S (float) – underlying asset price
+K (float) – strike price
+sigma (float) – annualized standard deviation, or volatility
+t (float) – time to expiration in years
+r (float) – risk-free interest rate
+q (float) – annualized continuous dividend rate
+flag (str) – ‘c’ or ‘p’ for call or put.
+>>> S = 100
+>>> K = 100
+>>> sigma = .2
+>>> r = .01
+>>> flag = 'c'
+>>> t = .5
+>>> q = 0
+>>> price = black_scholes_merton(flag, S, K, t, r, sigma, q)
+>>> iv = implied_volatility(price, S, K, t, r, q, flag)
+>>> expected_price = 5.87602423383
+>>> expected_iv = 0.2
+"""
+
 
 def register(msg, TradersOrder):
     #Set case information
