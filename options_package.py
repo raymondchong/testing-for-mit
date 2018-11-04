@@ -1,5 +1,7 @@
 import tradersbot as tt
 import math
+import random
+
 
 # Initialize #
 t = tt.TradersBot(host='127.0.0.1', id='trader0', password='trader0')
@@ -31,7 +33,11 @@ SECURITIES = {}
 # Initializes the prices
 def ack_register_method(msg, order):
     global SECURITIES
+    print("_____Register Method____")
+    print("Msg",msg)
+    print("Order",order)
     security_dict = msg['case_meta']['securities']
+    print(security_dict)
     for security in security_dict.keys():
         if not(security_dict[security]['tradeable']): 
             continue
@@ -41,14 +47,21 @@ def ack_register_method(msg, order):
 def market_update_method(msg, order):
     global SECURITIES
     SECURITIES[msg['market_state']['ticker']] = msg['market_state']['last_price']
-
+    print("_____MARKET UDPATE Method____")
+    print("Msg",msg)
+    print("Order",order)
 # Buys or sells in a random quantity every time it gets an update
 # You do not need to buy/sell here
 def trader_update_method(msg, order):
+    
     global SECURITIES
-    print(SECURITIES)
-    print(msg)
+    print("_____TradeR update Method____")
+    print("Msg",msg)
+    print("Order",order)
+    # print(SECURITIES)
+    # print(msg)
     positions = msg['trader_state']['positions']
+    print(positions)
     for security in positions.keys():
         if random.random() < 0.5:
             quant = 50
@@ -56,7 +69,18 @@ def trader_update_method(msg, order):
         else:
             quant = 50
             order.addSell(security, quantity=quant,price=SECURITIES[security])
-
+# Sample copy market
+def trade_method(msg, order):
+    print("_____Trade Method____")
+    print("Msg",msg)
+    print("Order",order)
+def news_method(msg):
+    #should we try to logically track who is the insider?
+    #regex to pull the word buy/sell is all right?
+    # "___ is [buy/sell]ing ___ shares of ___!"
+    print("_____News Method____")
+    print("Msg",msg)
+    print("Order",order)
 ###############################################
 #### You can add more of these if you want ####
 ###############################################
@@ -64,7 +88,7 @@ def trader_update_method(msg, order):
 t.onAckRegister = ack_register_method
 t.onMarketUpdate = market_update_method
 t.onTraderUpdate = trader_update_method
-#t.onTrade = trade_method
+t.onTrade = trade_method
 #t.onAckModifyOrders = ack_modify_orders_method
 #t.onNews = news_method
 t.run()
