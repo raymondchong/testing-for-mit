@@ -74,6 +74,76 @@ def trade_method(msg, order):
     print("_____Trade Method____")
     print("Msg",msg)
     print("Order",order)
+def ack_modify_orders_method(msg,order):
+#####################
+
+
+def ack_register_method(msg, order):
+    global MARKET
+    security_dict = msg['case_meta']['securities']
+    for security in security_dict.keys():
+        if not(security_dict[security]['tradeable']):
+            continue
+        type = security[-1].lower()
+        price = security_dict[security]['starting_price']
+        MARKET[security] = {}
+        MARKET[security]['type'] = type
+        MARKET[security]['cur_price'] = price
+        MARKET[security]['prices'] = []
+        #MARKET[security]['price'] = [price]
+        if security != "TMXFUT":
+            strike = int(security[1:-1])
+            MARKET[security]['strike'] = strike
+            MARKET[security]['cur_iv'] = iv(price, 100, strike, INTEREST_RATE, 1/12, type)
+            MARKET[security]['ivs'] = []
+    print(MARKET)
+
+
+# Updates latest price periodically
+def market_update_method(msg, order):
+    global MARKET
+    security = msg['market_state']['ticker']
+    MARKET[security]['cur_price'] = msg['market_state']['last_price']
+    MARKET[security]['prices'].append(MARKET[security]['cur_price'])
+    if security != "TMXFUT":
+        try:
+            MARKET[security]['cur_iv'] = iv(MARKET[security]['cur_price'], 100, MARKET[security]['strike'], INTEREST_RATE, exp_time(), MARKET[security]['type'])
+            MARKET[security]['ivs'].append(MARKET[security]['cur_iv'])
+        except:
+            MARKET[security]['cur_iv'] = 0
+            MARKET[security]['ivs'].append(MARKET[security]['cur_iv'])
+            print(security)
+
+        # if security != "TMXFUT":
+        #     MARKET[security]['ivs'].append(MARKET[security]['cur_iv'])
+        # print(MARKET[security]['prices'])
+        # print(MARKET[security]['ivs'])
+
+
+# Updates market state after each trade
+def trade_method(msg, order):
+    global MARKET
+    print('TRADE')
+    trade_dict = msg['trades']
+    for trade in trade_dict:
+        security = trade["ticker"]
+        MARKET[security]['cur_price'] = trade["price"]
+        MARKET[security]['prices'].append(MARKET[security]['cur_price'])
+        #security['price'].append(trade["price"])
+        # security['vol'] = calc_vol(security['type'] == 'C', trade['price'], 100, security['strike'], exp_time(), INTEREST_RATE)
+        if security != "TMXFUT":
+            try:
+                MARKET[security]['cur_iv'] = iv(MARKET[security]['cur_price'], 100, MARKET[security]['strike'], INTEREST_RATE, exp_time(), MARKET[security]['type'])
+                MARKET[security]['ivs'].append(MARKET[security]['cur_iv'])
+            except:
+                MARKET[security]['cur_iv'] = 0
+                MARKET[security]['ivs'].append(MARKET[security]['cur_iv'])
+                print(security)
+
+
+
+
+###########################
 def news_method(msg):
     #should we try to logically track who is the insider?
     #regex to pull the word buy/sell is all right?
@@ -89,6 +159,6 @@ t.onAckRegister = ack_register_method
 t.onMarketUpdate = market_update_method
 t.onTraderUpdate = trader_update_method
 t.onTrade = trade_method
-#t.onAckModifyOrders = ack_modify_orders_method
-#t.onNews = news_method
+t.onAckModifyOrders = ack_modify_orders_method
+t.onNews = news_method
 t.run()
